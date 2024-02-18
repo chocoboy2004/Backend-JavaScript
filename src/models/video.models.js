@@ -39,7 +39,7 @@ const videoSchema = new Schema({
     }
 }, {timestamps: true});
 
-const Video = mongoose.model('Video', videoSchema);
 videoSchema.plugin(mongooseAggregatePaginate);
+const Video = mongoose.model('Video', videoSchema);
 
 export {Video};
