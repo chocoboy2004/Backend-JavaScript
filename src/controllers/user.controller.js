@@ -7,6 +7,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 const registerUser = asyncHandler( async (req, res) => {
     // Get user details from frontend  -- 1
     const {fullname, email, username, password} = req.body
+    // console.log(req.body);
     // console.log("email: ", email);
     // console.log("username: ", username);
     // console.log("password: ", password);
@@ -31,15 +32,27 @@ const registerUser = asyncHandler( async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, 'User is already exist');
     }
-
+    // console.log(req.files);
 
     // Check for images, check for avatar -- 4
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
-    if (!avatarLocalPath) {
+    let avatarLocalPath;
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {  // checking for the files existence before giving path
+        avatarLocalPath = req.files.avatar[0].path;
+    } else {
         throw new ApiError(400, 'Avatar is required');
     }
+    // if (!avatarLocalPath) {
+    //     throw new ApiError(400, 'Avatar is required');
+    // }
+
+    let coverImageLocalPath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
 
 
     // Upload them to cloudinary, check for avatar  -- 5
@@ -71,6 +84,7 @@ const registerUser = asyncHandler( async (req, res) => {
     if (!createdUser) {
         throw new ApiError(500, 'Something Went Wrong');
     }
+    // console.log(createdUser);
 
 
     // return response  -- 9
