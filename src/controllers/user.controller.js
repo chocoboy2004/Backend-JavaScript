@@ -3,6 +3,8 @@ import ApiError from "../utils/ApiError.js";
 import User from "../models/user.models.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -125,14 +127,12 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // 1.
     const {username, email, password} = req.body
-    if (!username || !email) {
+    if (!username && !email) {
         throw new ApiError(400, 'Username or Email is required');
     }
 
-
-    // 2. 
-    if ([username, email, password].some((field) => field?.trim() === '')){
-        throw new ApiError(400, 'Invalid username or email');
+    if (password === '') {
+        throw new ApiError(400, 'Password is required');
     }
 
 
@@ -146,7 +146,11 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
     // 4. 
-    const isValidPassword = await user.isPasswordCorrect(password);
+    // const isValidPassword = await user.isPasswordCorrect(password);
+    // if (!isValidPassword) {
+    //     throw new ApiError(401, 'Invalid password')
+    // }
+    const isValidPassword = await bcrypt.compare(password, user.password)  // point 4 is updated
     if (!isValidPassword) {
         throw new ApiError(401, 'Invalid password')
     }
@@ -180,7 +184,6 @@ const loginUser = asyncHandler(async (req, res) => {
     )
 })
 
-
 const logoutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
@@ -212,5 +215,54 @@ const logoutUser = asyncHandler(async (req, res) => {
     )
 })
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // For re-generating the access token, we have to follow the below steps
+
+    // 1. Take the refreshToken
+    const incomingRefreshToken = req.cookie?.refreshToken || req.body?.refreshToken
+
+    // 2. check for refreshToken
+    if (!refreshAccessToken) {
+        throw new ApiError(404, 'Unauthorized refresh token')
+    }
+
+    // 3. Verify for refresh token ... basically we will check if the refresh token is valid or not
+    const decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+    // 4. Get the refresh token details ... basically user details
+    const user = await User.findById(decodedToken?._id)
+    if (!user) {
+        throw new ApiError(404, 'Unauthorized refresh token')
+    }
+
+    // 5. Check if incomingRefreshToken and user's refresh token is same or ... not
+    if (incomingRefreshToken !== user.refreshToken) {
+        throw new ApiError(404, 'Either refresh token is expired or used')
+    }
+
+    // 6. After completing all checks, simply generate the new access and refresh tokens
+    const {accessToken, newRefreshToken} = await generateAccessAndRefreshToken(user._id)
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    // return the response and also the cookie
+    return res
+    .status(201)
+    .cookie('accessToken', accessToken, options)
+    .cookie('refreshToken', newRefreshToken, options)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                accessToken, refreshToken: newRefreshToken
+            },
+            'Access and Refresh tokens are successfully generated'
+        )
+    )
+})
+
 export default registerUser;
-export { loginUser, logoutUser }
+export { loginUser, logoutUser, refreshAccessToken }
