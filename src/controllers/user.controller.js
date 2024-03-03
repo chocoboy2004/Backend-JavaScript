@@ -265,8 +265,42 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
+    // ** user is already logged in and now I want to change my existing password with a new password
+    // ** Follow the below steps for doing this
+    /*
+    1. take oldPassword, newPassword and confirmPassword from user
+    2. check any field is empty or not
+    3. if any field is empty, simply throw an error. Otherwise jump to the next step.
+    4. check newPassword and confirmPassword are same or not.
+    5. if they are equal, jump to the next step. Otherwise throw an error.
+    6. fetch the user details from the database(req.user).
+    7. check user's password and oldPassword are same or not.
+    8. if they are same, jump to the next step. Otherwise throw an error 
+    9. set the password with newPassword and save it to the database
+    10. simply return a response to the user
+    */
 
+    const { oldPassword, newPassword, confirmPassword } = req.body
+    if ([oldPassword, newPassword, confirmPassword].some((field) => field?.trim() === '')) {
+        throw new ApiError(404, 'All fields are required')
+    }
+    if (newPassword !== confirmPassword) {
+        throw new ApiError(404, 'newPassword and confirmPassword are different')
+    }
+
+    const user = await User.findById(req.user._id)
+    const isCorrectPassword = await bcrypt.compare(oldPassword, user.password)
+    if (!isCorrectPassword) {
+        throw new ApiError(404, 'Old password is incorrect')
+    }
+
+    user.password = newPassword
+    await user.save({saveBeforeValidate: false})
+
+    return res
+    .status(201)
+    .json(new ApiResponse(200, {}, 'Password updated successfully'))
 })
 
 export default registerUser;
-export { loginUser, logoutUser, refreshAccessToken }
+export { loginUser, logoutUser, refreshAccessToken, changeCurrentPassword }
