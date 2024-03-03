@@ -336,16 +336,29 @@ const changeFullnameAndEmail = asyncHandler(async (req, res) => {
         throw new ApiError(400, 'Fill all the fields carefully')
     }
 
-    const user = await User.findById(req.user._id)
-    if (!user) {
-        throw new ApiError(400, 'You are not logged in')
-    }
+    // const user = await User.findById(req.user._id)
+    // if (!user) {
+    //     throw new ApiError(400, 'You are not logged in')
+    // }
 
-    user.fullname = fullname
-    user.email = email
-    user.save({ validateBeforeSave: false })
+    // user.fullname = fullname
+    // user.email = email
+    // user.save({ validateBeforeSave: false })
 
-    const updatedUser = await User.findById(user._id).select('-password -refreshToken')
+    // const updatedUser = await User.findById(user._id).select('-password -refreshToken')
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                fullname,
+                email
+            }
+        },
+        {
+            new: true
+        }
+    ).select('-password -refreshToken')
 
     return res
     .status(201)
