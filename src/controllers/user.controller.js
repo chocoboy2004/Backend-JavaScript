@@ -371,12 +371,65 @@ const changeFullnameAndEmail = asyncHandler(async (req, res) => {
     )
 })
 
-export default registerUser;
+const updateImages = asyncHandler(async (req, res) => {
+    /*
+    1. take avatar and coverImage from multer. You can change any one of two images
+    2. check if two images are present or not
+    3. if not, throw an error. Otherwise jump onto the next step
+    4. upload images on cloudinary, and check for the images
+    5. update those images in user profile
+    6. return the response
+    */
+
+    let newAvatarLocalPath
+    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
+        newAvatarLocalPath = req.files.avatar[0].path
+    }
+    let newCoverImageLocalPath
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        newCoverImageLocalPath = req.files.coverImage[0].path
+    }
+    if (!newAvatarLocalPath && !newCoverImageLocalPath) {
+        throw new ApiError(400, 'You have to filled at least one field')
+    }
+
+    const newAvatar = await uploadOnCloudinary(newAvatarLocalPath)
+    const newCoverImage = await uploadOnCloudinary(newCoverImageLocalPath)
+    if (!newAvatar && !newCoverImage) {
+        throw new ApiError(400, 'You have to fill at least one field')
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: newAvatar?.url,
+                coverImage: newCoverImage?.url
+            }
+        },
+        {
+            new: true
+        }
+    ).select('-password -refreshToken')
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            updatedUser,
+            'Images are updated'
+        )
+    )
+})
+
+export default registerUser
 export {
     loginUser,
     logoutUser,
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentUser,
-    changeFullnameAndEmail
+    changeFullnameAndEmail,
+    updateImages
 }
