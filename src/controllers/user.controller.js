@@ -14,7 +14,7 @@ const generateAccessAndRefreshToken = async (userId) => {
         const refreshToken = getUser.generateRefreshToken()
 
         getUser.refreshToken = refreshToken
-        getUser.save({ validateBeforeSave: false })
+        await getUser.save({ validateBeforeSave: false })
 
         return { accessToken, refreshToken }
         
@@ -262,6 +262,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             'Access and Refresh tokens are successfully generated'
         )
     )
+})
+
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+
 })
 
 export default registerUser;
