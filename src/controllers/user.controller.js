@@ -295,7 +295,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     }
 
     user.password = newPassword
-    await user.save({saveBeforeValidate: false})
+    await user.save({validateBeforeSave: false})
 
     return res
     .status(201)
@@ -303,7 +303,59 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+    const currentUser = await User.findById(req.user._id)
+    if (!currentUser) {
+        throw new ApiError(404, 'There is no current user')
+    }
 
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            currentUser,
+            'Current user is fetched'
+        )
+    )
+})
+
+const changeFullnameAndEmail = asyncHandler(async (req, res) => {
+    /*
+    1. take fullname and email from req.body
+    2. check for username and email
+    3. fetch the current user
+    4. set new username and email
+    5. return response
+    */
+
+    const {fullname, email} = req.body
+    if (!fullname && !email) {
+        throw new ApiError(400, 'please fill the fields')
+    }
+    if ([fullname, email].some((field) => field?.trim() === '')) {
+        throw new ApiError(400, 'Fill all the fields carefully')
+    }
+
+    const user = await User.findById(req.user._id)
+    if (!user) {
+        throw new ApiError(400, 'You are not logged in')
+    }
+
+    user.fullname = fullname
+    user.email = email
+    user.save({ validateBeforeSave: false })
+
+    const updatedUser = await User.findById(user._id).select('-password -refreshToken')
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            updatedUser,
+            'User updated successfully'
+        )
+    )
 })
 
 export default registerUser;
@@ -312,5 +364,6 @@ export {
     logoutUser,
     refreshAccessToken,
     changeCurrentPassword,
-    getCurrentUser
+    getCurrentUser,
+    changeFullnameAndEmail
 }
