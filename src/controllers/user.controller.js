@@ -423,6 +423,88 @@ const updateImages = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserChannelProfile = asyncHandler(async(req, res) => {
+    // 1. get user channel profile
+    const {username} = req.params
+
+    // 2. check user profile is there or not. If not, just throw an error
+    if (!username?.trim()) {
+        throw new ApiError(400, "User profile is not available")
+    }
+
+    // 3. start writing aggregation pipeline
+    const channel = await User.aggregate(
+        [
+            {
+                $match: {
+                    username: username?.toLowerCase()
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscribers"
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "subscriber",
+                    as: "subscribedTo"
+                }
+            },
+            {
+                $addFields: {
+                    subscribersCount: {
+                        $size: "$subscribers"
+                    },
+                    channelSubscribedToCount: {
+                        $size: "$subscribedTo"
+                    },
+                    isSubscribed: {
+                        $cond: {
+                            if: {
+                                $in: [req.user?._id, "$subscribers.subscriber"]
+                            },
+                            then: true,
+                            else: false
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    fullname: 1,
+                    username: 1,
+                    subscribersCount: 1,
+                    channelSubscribedToCount: 1,
+                    isSubscribed: 1,
+                    avatar: 1,
+                    coverImage: 1
+                }
+            }
+        ]
+    )
+    console.log(channel)
+
+    if (!channel?.length) {
+        throw new ApiError(404, "User profile is not exists")
+    }
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            channel[0],
+            "User channel profile fetched"
+        )
+    )
+})
+
 export default registerUser
 export {
     loginUser,
@@ -431,5 +513,6 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     changeFullnameAndEmail,
-    updateImages
+    updateImages,
+    getUserChannelProfile
 }

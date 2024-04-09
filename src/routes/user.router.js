@@ -9,7 +9,8 @@ import {
     changeCurrentPassword,
     getCurrentUser,
     changeFullnameAndEmail,
-    updateImages
+    updateImages,
+    getUserChannelProfile
 } from "../controllers/user.controller.js";
 import verifyJWT from "../middlewares/auth.middleware.js";
 
@@ -45,5 +46,6 @@ router.route('/update-images').post(
     ]),
     updateImages
 )
+router.route("/getUserChannelProfile").post(verifyJWT, getUserChannelProfile)
 
 export default router;
