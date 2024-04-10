@@ -4,7 +4,6 @@ import dotenv from 'dotenv';
 // import { DB_NAME } from './constants';
 import connectDB from './db/server.js';
 import app from './app.js';
-import registerUser from './controllers/user.controller.js';
 
 dotenv.config({
     path: './env'

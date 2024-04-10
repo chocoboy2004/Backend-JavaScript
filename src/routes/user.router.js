@@ -1,8 +1,8 @@
 import { Router } from "express";
-import registerUser, { getWatchHistory } from "../controllers/user.controller.js";
 // importing upload for file handling
 import upload from "../middlewares/multer.middleware.js";
 import {
+    registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
