@@ -5,6 +5,7 @@ import uploadOnCloudinary from "../utils/cloudinary.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import mongoose from "mongoose"
 
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -177,15 +178,18 @@ const loginUser = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             {
-                user: accessToken, refreshToken, loggedInUser
+                username: loggedInUser.username,
+                fullname: loggedInUser.fullname,
+                avatar: loggedInUser.avatar,
+                coverImage: loggedInUser.coverImage
             },
-            'User logged in successfully'
+            `${loggedInUser.fullname} logged in successfully`
         )
     )
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-    await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user._id,
         {
             $set: {
@@ -210,7 +214,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             {},
-            'User logged out successfully !'
+            `${user.fullname} logged out successfully !`
         )
     )
 })
@@ -303,7 +307,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    const currentUser = await User.findById(req.user._id)
+    const currentUser = await User.findById(req.user._id).select("-password -refreshToken")
     if (!currentUser) {
         throw new ApiError(404, 'There is no current user')
     }
@@ -313,7 +317,13 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(
         new ApiResponse(
             200,
-            currentUser,
+            {
+                username: currentUser.username,
+                fullname: currentUser.fullname,
+                email: currentUser.email,
+                avatar: currentUser.avatar,
+                coverImage: currentUser.coverImage
+            },
             'Current user is fetched'
         )
     )
@@ -431,6 +441,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
     if (!username?.trim()) {
         throw new ApiError(400, "User profile is not available")
     }
+    console.log(username)
 
     // 3. start writing aggregation pipeline
     const channel = await User.aggregate(
@@ -489,6 +500,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
         ]
     )
     console.log(channel)
+    console.log(channel.length)
 
     if (!channel?.length) {
         throw new ApiError(404, "User profile is not exists")
@@ -510,7 +522,7 @@ const getWatchHistory = asyncHandler(async(req, res) => {
         [
             {
                 $match: {
-                    _id: new mongoose.Types.ObjectId(req.user._id)
+                    _id: new mongoose.Types.ObjectId(req.user?._id)
                 }
             },
             {
