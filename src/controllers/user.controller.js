@@ -441,7 +441,7 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
     if (!username?.trim()) {
         throw new ApiError(400, "User profile is not available")
     }
-    console.log(username)
+    console.log(req.params.username)
 
     // 3. start writing aggregation pipeline
     const channel = await User.aggregate(
@@ -502,16 +502,16 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
     console.log(channel)
     console.log(channel.length)
 
-    if (!channel?.length) {
-        throw new ApiError(404, "User profile is not exists")
-    }
+    // if (!channel?.length) {
+    //     throw new ApiError(404, "User profile is not exists")
+    // }
 
     return res
     .status(201)
     .json(
         new ApiResponse(
             200,
-            channel[0],
+            channel,
             "User channel profile fetched"
         )
     )
