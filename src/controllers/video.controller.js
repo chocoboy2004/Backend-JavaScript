@@ -3,6 +3,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Video } from "../models/video.models.js";
+import mongoose from "mongoose";
 
 const publishVideo = asyncHandler(async(req, res) => {
     /*
@@ -17,7 +18,7 @@ const publishVideo = asyncHandler(async(req, res) => {
 
     */
 
-    const { title, description } = req.body
+    const {title, description } = req.body
     if ([title, description].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "Title and description needed")
     }
@@ -70,6 +71,30 @@ const publishVideo = asyncHandler(async(req, res) => {
     )
 })
 
+const getVideoId = asyncHandler(async(req, res) => {
+    const { title } = req.body
+
+    if (!title) {
+        throw new ApiError(400, "Title is required")
+    }
+
+    const video = await Video.findOne({ title })
+    if (!video) {
+        throw new ApiError(400, "Video is not available")
+    }
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            video,
+            "Video fetched"
+        )
+    )
+})
+
 export {
-    publishVideo
+    publishVideo,
+    getVideoId
 }
