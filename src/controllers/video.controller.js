@@ -175,8 +175,37 @@ const updateVideo = asyncHandler(async (req, res) => {
     )
 })
 
+const deleteVideo = asyncHandler(async (req, res) => {
+    /*
+    1. get the video ID from req.params
+    2. check id is received or not
+    3. if not received, throw an error
+    4. simply delete that document using the ID
+    5. return a response to the user.
+    */
+
+    const { videoId } = req.params
+    if (!videoId) {
+        throw new ApiError(400, "Video ID is required")
+    }
+    console.log(videoId)
+
+    await Video.findByIdAndDelete(videoId)
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Video is deleted successfully"
+        )
+    )
+})
+
 export {
     publishVideo,
     getVideoId,
-    updateVideo
+    updateVideo,
+    deleteVideo
 }
