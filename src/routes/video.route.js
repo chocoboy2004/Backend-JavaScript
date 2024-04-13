@@ -21,6 +21,6 @@ router.route("/upload").post(
     ),
     publishVideo
 )
-router.route("/findId/:").patch(verifyJWT, getVideoId)
+router.route("/find/:videoId").get(verifyJWT, getVideoId)
 
 export default router

@@ -78,7 +78,7 @@ const getVideoId = asyncHandler(async(req, res) => {
         throw new ApiError(400, "Title is required")
     }
 
-    const video = await Video.findById({ videoId })
+    const video = await Video.findById(videoId)
     if (!video) {
         throw new ApiError(400, "Video is not available")
     }
