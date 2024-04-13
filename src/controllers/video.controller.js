@@ -3,7 +3,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Video } from "../models/video.models.js";
-import mongoose from "mongoose";
+import { v2 as cloudinary } from "cloudinary";
 
 const publishVideo = asyncHandler(async(req, res) => {
     /*
@@ -94,7 +94,89 @@ const getVideoId = asyncHandler(async(req, res) => {
     )
 })
 
+const updateVideo = asyncHandler(async (req, res) => {
+    //TODO: update video details like title, description, thumbnail
+    /*
+    1. Take the video ID from params
+    2. check whether the id is valid or not. If not, through an ERROR
+    3. check whether the video is owned by the user or not. If not, through an ERROR
+       -- compare owner and req.user._id
+       -- if not matched, throw an ERROR
+    4. take title, description from req.body and thumbnail using multer.
+    5. check title, descriptions are empty or not.
+    6. check the thumbnail.
+    7. upload thumbnail to the cloudinary and check for upload progress.
+    8. update the video details in to the database.
+    9. return a response to the database.
+    */
+
+    const { videoId } = req.params
+    if (!videoId) {
+        throw new ApiError(400, "Video ID is required")
+    }
+
+    const videoStatus = await Video.findById(videoId)
+    if (!videoStatus) {
+        throw new ApiError(400, "Video is not exists")
+    }
+
+    // console.log(videoStatus.owner)
+    // console.log(req.user._id)
+
+    // if (videoStatus.owner = req.user._id) {
+    //     throw new ApiError(404, "Invalid owner")
+    // }
+
+    const {title, description} = req.body
+    if (!title && !description) {
+        throw new ApiError(400, "Title or Description is required")
+    }
+
+    let thumbnailLocalPath
+    if (req.files && Array.isArray(req.files.thumbnail) && req.files.thumbnail.length > 0) {
+        thumbnailLocalPath = req.files.thumbnail[0].path
+    }
+    if (!thumbnailLocalPath) {
+        throw new ApiError(400, "Missing")
+    }
+    
+    const newThumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+    
+    await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set: {
+                title: title?.trim(),
+                description: description?.trim(),
+                thumbnail: newThumbnail?.url
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    const updateVideoDetails = await Video.findById(videoId)
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                _id: updateVideoDetails._id,
+                title: updateVideoDetails.title,
+                description: updateVideoDetails.description,
+                thumbnail: updateVideoDetails.thumbnail,
+                owner: updateVideoDetails.owner
+            },
+            "Video details are updated successfully"
+        )
+    )
+})
+
 export {
     publishVideo,
-    getVideoId
+    getVideoId,
+    updateVideo
 }
