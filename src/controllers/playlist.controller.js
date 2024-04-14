@@ -76,7 +76,40 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     )
 })
 
+const getPlaylistById = asyncHandler(async (req, res) => {
+    //TODO: get playlist by id
+    /*
+    1. take playlistID from req.params
+    2. check for the playlist ID
+    3. if ID is not there, throw an error
+    4. make a database call to fetch the playlist using the playlist ID
+    5. check for the fetched data
+    6. If data is not fecthed, throw an error
+    7. return a response
+    */
+    const {playlistId} = req.params
+    if (!playlistId) {
+        throw new ApiError(404, "No ID is provided")
+    }
+
+    const playlist = await Playlist.findById(playlistId)
+    if (!playlist) {
+        throw new ApiError(404, "Invalid ID is provided! Please give a valid ID")
+    }
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            playlist,
+            "Playlist is fetched successfully by using it's ID"
+        )
+    )
+})
+
 export {
     createPlaylist,
-    getUserPlaylists
+    getUserPlaylists,
+    getPlaylistById
 }

@@ -25,7 +25,7 @@ app.use(cookieParser());
 // import routes
 import userRouter from './routes/user.route.js';
 import videoRouter from "./routes/video.route.js";
-import playlistRouter from "./routes/playlisy.route.js"
+import playlistRouter from "./routes/playlist.route.js"
 
 // route declaration
 app.use('/api/v1/users', userRouter)
