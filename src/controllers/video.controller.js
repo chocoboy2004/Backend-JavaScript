@@ -3,7 +3,6 @@ import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
 import { Video } from "../models/video.models.js";
-import { v2 as cloudinary } from "cloudinary";
 
 const publishVideo = asyncHandler(async(req, res) => {
     /*
