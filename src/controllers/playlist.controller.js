@@ -45,6 +45,38 @@ const createPlaylist = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserPlaylists = asyncHandler(async (req, res) => {
+    //TODO: get user playlists
+
+    const playlistDetails = await Playlist.aggregate(
+        [
+            {
+                $match: {
+                    owner: req.user._id
+                }
+            },
+            {
+                $project: {
+                    playlistName: 1,
+                    description: 1,
+                    createdAt: 1
+                }
+            }
+        ]
+    )
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            playlistDetails,
+            "User's all playlists are fetched successfully"
+        )
+    )
+})
+
 export {
-    createPlaylist
+    createPlaylist,
+    getUserPlaylists
 }
