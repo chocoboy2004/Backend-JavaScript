@@ -289,10 +289,75 @@ const getAllVideos = asyncHandler(async (req, res) => {
    )
 })
 
+const togglePublishStatus = asyncHandler(async (req, res) => {
+    /*
+    1. take the video ID from req.params
+    2. check for the ID.
+    3. If ID is not there, throw an error
+    4. take status from req.body
+    5. update status
+    6. return a response
+    */
+    const { videoId } = req.params
+    if (!videoId) {
+        throw new ApiError(404, "Video ID is required")
+    }
+
+    const { status } = req.query
+    
+    if (!status || !status === "") {
+        throw new ApiError(404, "Status is required")
+    }
+
+    if (status === "1" || status === "true" || status === "True") {
+        await Video.findByIdAndUpdate(
+            videoId,
+            {
+                $set: {
+                    isPublished: true
+                }
+            },
+            {
+                new: true
+            }
+        )
+    } else if (status === "0" || status === "false" || status === "False") {
+        await Video.findByIdAndUpdate(
+            videoId,
+            {
+                $set: {
+                    isPublished: false
+                }
+            },
+            {
+                new: true
+            }
+        )
+    } else {
+        throw new ApiError(404, "Invalid status")
+    }
+
+    const video = await Video.findById(videoId)
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                title: video.title,
+                isPublished: video.isPublished
+            },
+            "Publish status updated successfully"
+        )
+    )
+})
+
 export {
     publishVideo,
     getVideoId,
     updateVideo,
     deleteVideo,
-    getAllVideos
+    getAllVideos,
+    togglePublishStatus
 }
