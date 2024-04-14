@@ -23,12 +23,14 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 // import routes
-import userRouter from './routes/user.router.js';
+import userRouter from './routes/user.route.js';
 import videoRouter from "./routes/video.route.js";
+import playlistRouter from "./routes/playlisy.route.js"
 
 // route declaration
 app.use('/api/v1/users', userRouter)
 app.use("/api/v1/videos", videoRouter)
+app.use("/api/v1/playlists", playlistRouter)
 
 
 export default app
