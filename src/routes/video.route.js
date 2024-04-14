@@ -3,7 +3,8 @@ import {
     publishVideo,
     getVideoId,
     updateVideo,
-    deleteVideo 
+    deleteVideo,
+    getAllVideos
 } from "../controllers/video.controller.js";
 import verifyJWT from "../middlewares/auth.middleware.js";
 import upload from "../middlewares/multer.middleware.js";
@@ -32,5 +33,6 @@ router.route("/find/:videoId")
 .patch(upload.fields([{name: "thumbnail", maxCount: 1}]), updateVideo)
 
 router.route("/delete/:videoId").delete(verifyJWT, deleteVideo)
+router.route("/getVideos").get(verifyJWT, getAllVideos)
 
 export default router

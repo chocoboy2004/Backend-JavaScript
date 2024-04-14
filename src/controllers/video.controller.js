@@ -202,9 +202,97 @@ const deleteVideo = asyncHandler(async (req, res) => {
     )
 })
 
+const getAllVideos = asyncHandler(async (req, res) => {
+    //TODO: get all videos based on query, sort, pagination
+    /*
+    1. take query, sortBy, sortType from req.query
+    2. check any field is empty or not.
+    3. If any field is empty, simply throw an error
+    4. write a aggregation pipeline for retrieving video details
+    5. return the res
+    */
+
+   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
+   if (
+    [query, sortBy, sortType].some((field) => field?.trim() === "")
+   ) {
+    throw new ApiError(404, "All details are required")
+   }
+
+   let aggregationPipeline = []
+
+   if (!query) {
+    throw new ApiError(404, "Query is required")
+   }
+   aggregationPipeline.push(
+    {
+        $match: {
+            title: {
+                $regex: query,
+                $options: "i"
+            }
+        }
+    },
+    {
+        $project: {
+            title: 1,
+            description: 1,
+            videoFile: 1,
+            thumbnail: 1,
+            createdAt: 1,
+            owner: 1
+        }
+    }
+   )
+
+   let sortOrder
+
+   if (!sortBy || !sortType) {
+    throw new ApiError(404, "Sort by and sort type are required")
+   } else {
+    if (sortType === "asc" || "1") {
+        sortOrder = 1
+    } else if (sortType === "desc" || "-1") {
+        sortOrder = -1
+    } else {
+        throw new ApiError(404, "SortBy will be either asc or desc")
+    }
+   }
+
+   aggregationPipeline.push(
+    {
+        $sort: {
+            sortBy: sortOrder
+        }
+    }
+   )
+   
+
+   const video = await Video.aggregate(
+    aggregationPipeline,
+    limit,
+    page
+   )
+
+   if (!video) {
+    throw new ApiError(404, "something went wrong while aggregating video")
+   }
+
+   return res
+   .status(201)
+   .json(
+    new ApiResponse(
+        200,
+        video,
+        "Videos are fetched successfully"
+    )
+   )
+})
+
 export {
     publishVideo,
     getVideoId,
     updateVideo,
-    deleteVideo
+    deleteVideo,
+    getAllVideos
 }
