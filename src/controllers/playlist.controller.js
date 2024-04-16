@@ -179,10 +179,59 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     )
 })
 
+const updatePlaylist = asyncHandler(async (req, res) => {
+    //TODO: update playlist
+    /*
+    1. take the playlistId which you want to remove from the Playlist collection.
+    2. check whether the given playlistId is empty or not.
+    3. if empty, throw an error.
+    4. check whether the Id is present in the Playlist collection or not. If not, throw an error.
+    5. remove the playlistId from the Playlist collection
+    6. return a response
+    */
+    const {playlistId} = req.params
+    if (!playlistId) {
+        throw new ApiError(404, "PlaylistId is required")
+    }
+
+    const {name, description} = req.body
+    console.log(`
+        ${name},
+        ${description}
+    `)
+    if (!name && !description) {
+        throw new ApiError(404, "Playlist name or description is required")
+    }
+
+    const updatedPlaylist = await Playlist.findByIdAndUpdate(
+        playlistId,
+        {
+            $set: {
+                playlistName: name,
+                description: description
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            updatedPlaylist,
+            "Playlist is updated successfully"
+        )
+    )
+})
+
 export {
     createPlaylist,
     getUserPlaylists,
     getPlaylistById,
     addVideoToPlaylist,
-    removeVideoFromPlaylist
+    removeVideoFromPlaylist,
+    updatePlaylist
 }
