@@ -54,6 +54,63 @@ const addComment = asyncHandler(async(req, res) => {
     )
 })
 
+const updateComment = asyncHandler(async (req, res) => {
+    // TODO: update a comment
+    /*
+    1. pass commentId in req.params
+    2. check ID is successfully get or not.
+    3. If ID is not get, throw an error.
+    4. fetch the comment details from the details using the videoId.
+    5. If commentId is not present in the database, throw an error.
+    6. take ownerId, req.user._id and compare it.
+    7. If they both are not equal, throw an error.
+    8. take content from req.body
+    9. check content is present ot not. If not, throw an error.
+    10. create a comment document.
+    11. return a response
+    */
+    const { commentId } = req.params
+    if (!commentId) {
+        throw new ApiError(400, "Comment ID is required")
+    }
+
+    const comment = await Comment.findById(commentId)
+    if (!comment) {
+        throw new ApiError(400, "Comment is not exists")
+    }
+    if (!(comment.owner.toString() === req.user._id.toString())) {
+        throw new ApiError(404, "You have no access to update this comment")
+    }
+
+    const { content } = req.body
+    if (!content) {
+        throw new ApiError(404, "Content is required")
+    }
+    
+    const updateComment = await Comment.findByIdAndUpdate(
+        commentId,
+        {
+            $set: {
+                content: content.trim()
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            updateComment,
+            "Comment is updated successfully"
+        )
+    )
+})
+
 export {
-    addComment
+    addComment,
+    updateComment
 }
