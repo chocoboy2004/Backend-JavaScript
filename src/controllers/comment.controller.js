@@ -3,6 +3,7 @@ import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { Video } from "../models/video.models.js";
 import Comment from "../models/comments.model.js";
+import mongoose from "mongoose";
 
 const addComment = asyncHandler(async(req, res) => {
     // TODO: add a comment to a video
@@ -147,8 +148,49 @@ const deleteComment = asyncHandler(async (req, res) => {
     )
 })
 
+const getVideoComments = asyncHandler(async (req, res) => {
+    //TODO: get all comments for a video
+    const {videoId} = req.params
+    if (!videoId) {
+        throw new ApiError(404, "VideoId is required")
+    }
+
+    const listComments = await Comment.aggregate(
+        [
+            {
+                $match: {
+                    video: new mongoose.Types.ObjectId(videoId)
+                }
+            },
+            {
+                $sort: {
+                    createdAt: -1
+                }
+            },
+            {
+                $limit: 10
+            }
+        ]
+    )
+
+    if (!listComments) {
+        throw new ApiError(500, "Something went wrong")
+    }
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            listComments,
+            "Comments are fetched successfully"
+        )
+    )
+})
+
 export {
     addComment,
     updateComment,
-    deleteComment
+    deleteComment,
+    getVideoComments
 }
