@@ -110,7 +110,45 @@ const updateComment = asyncHandler(async (req, res) => {
     )
 })
 
+const deleteComment = asyncHandler(async (req, res) => {
+    // TODO: delete a comment
+    /*
+    1. take commentId from req.params. If ID is not there, throw an error.
+    2. fetch the comment details from the database using the commentId.
+    3. If comment document is not present into the DB, throw an error.
+    4. check ower and req.user._id are same or not. If not, throw an error.
+    5. delete the comment.
+    6. return a response
+    */
+
+    const { commentId } = req.params
+    if (!commentId) {
+        throw new ApiError(404, "CommentId is required")
+    }
+
+    const comment = await Comment.findById(commentId)
+    if (!comment) {
+        throw new ApiError(404, "Comment not found")
+    }
+    if (!(comment.owner.toString() === req.user._id.toString())) {
+        throw new ApiError(404, "Can't remove the comment! Unauthorized access")
+    }
+
+    await Comment.findByIdAndDelete(commentId)
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Comment is removed successfully"
+        )
+    )
+})
+
 export {
     addComment,
-    updateComment
+    updateComment,
+    deleteComment
 }
