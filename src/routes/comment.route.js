@@ -7,6 +7,6 @@ import {
 const router = Router()
 router.use(verifyJWT)
 
-router.route("/add").post(addComment)
+router.route("/add/:videoId").post(addComment)
 
 export default router
