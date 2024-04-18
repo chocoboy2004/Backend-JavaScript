@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import Tweet from "../models/tweets.model.js";
+import mongoose from "mongoose";
 
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
@@ -100,8 +101,51 @@ const deleteTweet = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserTweets = asyncHandler(async (req, res) => {
+    // TODO: get user tweets
+    const user = req.user._id
+    if (!user) {
+        throw new ApiError(404, "Please login or signup")
+    }
+
+    const listOfTweets = await Tweet.aggregate(
+        [
+            {
+                $match: {
+                    owner: new mongoose.Types.ObjectId(user)
+                }
+            },
+            {
+                $sort: {
+                    createdAt: -1
+                }
+            },
+            {
+                $limit: 15
+            },
+            {
+                $project: {
+                    owner: 1,
+                    content: 1
+                }
+            }
+        ]
+    )
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            listOfTweets,
+            "Tweets are fetched successfully"
+        )
+    )
+})
+
 export {
     createTweet,
     updateTweet,
-    deleteTweet
+    deleteTweet,
+    getUserTweets
 }
