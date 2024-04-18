@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import Tweet from "../models/tweets.model.js";
+import { isValidObjectId } from "mongoose";
 
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
@@ -72,7 +73,36 @@ const updateTweet = asyncHandler(async (req, res) => {
     )
 })
 
+const deleteTweet = asyncHandler(async (req, res) => {
+    //TODO: delete tweet
+    const { tweetId } = req.params
+    if(!tweetId) {
+        throw new ApiError(404, "Tweet ID is required")
+    }
+
+    const tweet = await Tweet.findById(tweetId)
+    if (!tweet) {
+        throw new ApiError(404, "Invalid tweet ID")
+    }
+    if (!(tweet.owner.toString() === req.user._id.toString())) {
+        throw new ApiError(404, "You have no access to delete this tweet")
+    }
+
+    await Tweet.findByIdAndDelete(tweetId)
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Tweet deleted successfully"
+        )
+    )
+})
+
 export {
     createTweet,
-    updateTweet
+    updateTweet,
+    deleteTweet
 }
