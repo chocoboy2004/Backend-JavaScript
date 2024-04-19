@@ -86,25 +86,25 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
               }
             },
             {
-              $lookup: {
-                from: "users",
-                localField: "subscriber",
-                foreignField: "_id",
-                as: "subscribers"
-              }
+                $lookup: {
+                  from: "users",
+                  localField: "subscriber",
+                  foreignField: "_id",
+                  as: "subscribers"
+                }
             },
             {
-              $unwind: "$subscribers"
+                $unwind: "$subscribers"
             },
             {
-              $group: {
-                _id: "$subscribers._id"
-              }
-            },
-            {
-              $count: "subscribersCount"
+                $project: {
+                  subscriber: 1,
+                  "subscribers.username": 1,
+                  "subscribers.fullname": 1,
+                  "subscribers.avatar": 1
+                }
             }
-          ]
+        ]
     )
 
     return res
