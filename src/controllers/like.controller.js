@@ -69,11 +69,70 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
-    const {commentId} = req.params
     //TODO: toggle like on comment
+    /*
+    1. take commentId from req.params
+    2. check if Id is passed in req.params
+    3. If not passed, throw an error.
+    4. check the commentId is valid or not. If not, throw an error.
+    5. check if the commentId is already in likes collection or not.
+    6. If the commentId is present, just delete the like document where the videoId is present and return a response.
+    7. If the commentId is not present, create a new like document and return a response.
+    */
+   const {commentId} = req.params
+   if (!commentId) {
+       throw new ApiError(404, "Comment ID is required")
+   }
 
+   const isValidId = isValidObjectId(commentId)
+   if (!isValidId) {
+       throw new ApiError(404, "Invalid comment ID")
+   }
+
+   try {
+       const existedDocument = await Like.findOne(
+        {
+            comment: commentId,
+            likedBy: req.user._id
+        }
+       )
+
+       if (!existedDocument) {
+        const like = await Like.create(
+            {
+                comment: commentId,
+                likedBy: req.user._id
+            }
+        )
+
+        return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                200,
+                like,
+                "You liked this comment successfully"
+            )
+        )
+       } else {
+        const deletedDocument = await Like.findByIdAndDelete(existedDocument._id)
+        return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                200,
+                deletedDocument,
+                "You unliked this comment successfully"
+            )
+        )
+       }
+   } catch (error) {
+       console.error(`Error cooured in try block: ${error}`)
+       process.exit(1)
+   }
 })
 
 export {
-    toggleVideoLike
+    toggleVideoLike,
+    toggleCommentLike
 }
