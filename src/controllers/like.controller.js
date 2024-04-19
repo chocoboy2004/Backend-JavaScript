@@ -132,7 +132,70 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
    }
 })
 
+const toggleTweetLike = asyncHandler(async (req, res) => {
+    //TODO: toggle like on tweet
+    /*
+    1. take tweetId from req.params
+    2. check if Id is passed in req.params. If not passed, throw an error
+    3. check the tweetId is valid or not. If not, throw an error.
+    4. check if the tweetId is already in likes collection or not.
+    5. If the tweetId is present, just delete the like document where the tweetId is present and retrun a response.
+    6. If the tweetId is not present, create a new like document and return a response
+    */
+    const {tweetId} = req.params
+    if (!tweetId) {
+        throw new ApiError(404, "tweetId is required")
+    }
+
+    const validId = isValidObjectId(tweetId)
+    if (!validId) {
+        throw new ApiError(404, "Invalid tweetId")
+    }
+
+    try {
+        const existedDocument = await Like.findOne(
+            {
+                tweet: tweetId,
+                likedBy: req.user._id
+            }
+        )
+
+        if (!existedDocument) {
+            const like = await Like.create(
+                {
+                    tweet: tweetId,
+                    likedBy: req.user._id
+                }
+            )
+            return res
+            .status(201)
+            .json(
+                new ApiResponse(
+                    200,
+                    like,
+                    "You likes this tweet successfully"
+                )
+            )
+        } else {
+            const deletedDocument = await Like.findByIdAndDelete(existedDocument._id)
+            return res
+            .status(201)
+            .json(
+                new ApiResponse(
+                    200,
+                    deletedDocument,
+                    "You unliked0 this tweet successfully"
+                )
+            )
+        }
+    } catch (error) {
+        console.error(`Error is occured in try block: ${error}`)
+        process.exit(1)
+    }
+})
+
 export {
     toggleVideoLike,
-    toggleCommentLike
+    toggleCommentLike,
+    toggleTweetLike
 }
