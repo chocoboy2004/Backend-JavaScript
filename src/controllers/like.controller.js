@@ -2,7 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import Like from "../models/likes.model.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
     //TODO: toggle like on video
@@ -194,8 +194,63 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
     }
 })
 
+const getLikedVideos = asyncHandler(async (req, res) => {
+    //TODO: get all liked videos
+    const videos = await Like.aggregate(
+        [
+            {
+              $match: {
+                likedBy: new mongoose.Types.ObjectId(req.user._id)
+              }
+            },
+            {
+              $lookup: {
+                from: "videos",
+                localField: "video",
+                foreignField: "_id",
+                as: "videoDetails"
+              }
+            },
+            {
+              $addFields: {
+                videoDetails: "$videoDetails"
+              }
+            },
+            {
+              $unwind: "$videoDetails"
+            },
+            {
+              $project: {
+                _id: 1,
+                video: {
+                  _id: "$videoDetails._id",
+                  videoFile: "$videoDetails.videoFile",
+                  thumbnail: "$videoDetails.thumbnail",
+                  title: "$videoDetails.title",
+                  description: "$videoDetails.description",
+                  views: "$videoDetails.views",
+                  isPublished: "$videoDetails.isPublished",
+                  owner: "$videoDetails.owner"
+                }
+              }
+            }
+          ]
+    )
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            videos,
+            "Liked videos are fetched successfully"
+        )
+    )
+})
+
 export {
     toggleVideoLike,
     toggleCommentLike,
-    toggleTweetLike
+    toggleTweetLike,
+    getLikedVideos
 }
