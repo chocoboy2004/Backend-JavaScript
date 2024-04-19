@@ -5,6 +5,6 @@ import { toggleSubscription } from "../controllers/subscription.controller.js";
 const router = Router()
 router.use(verifyJWT)
 
-router.route("/toggleSubscription").post(toggleSubscription)
+router.route("/toggleSubscription/:channelId").post(toggleSubscription)
 
 export default router
