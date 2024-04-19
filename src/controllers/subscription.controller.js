@@ -1,7 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { Subscription } from "../models/subscription.model.js";
 
 const toggleSubscription = asyncHandler(async (req, res) => {
@@ -66,6 +66,59 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     }
 })
 
+// controller to return subscriber list of a channel
+const getUserChannelSubscribers = asyncHandler(async (req, res) => {
+    const {channelId} = req.params
+    if (!channelId) {
+        throw new ApiError(404, "ChannelId is required")
+    }
+
+    const validId = isValidObjectId(channelId)
+    if (!validId) {
+        throw new ApiError(404, "Invalid channelId")
+    }
+
+    const subscribers = await Subscription.aggregate(
+        [
+            {
+              $match: {
+                channel: new mongoose.Types.ObjectId(channelId)
+              }
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "subscriber",
+                foreignField: "_id",
+                as: "subscribers"
+              }
+            },
+            {
+              $unwind: "$subscribers"
+            },
+            {
+              $group: {
+                _id: "$subscribers._id"
+              }
+            },
+            {
+              $count: "subscribersCount"
+            }
+          ]
+    )
+
+    return res
+    .status(201)
+    .json(
+        new ApiResponse(
+            200,
+            subscribers,
+            "Subscribers of this channel are fetched successfully"
+        )
+    )
+})
+
 export {
-    toggleSubscription
+    toggleSubscription,
+    getUserChannelSubscribers
 }
