@@ -31,6 +31,7 @@ import tweetRouter from "./routes/tweet.route.js"
 import likeRouter from "./routes/like.route.js"
 import subscriptionRouter from "./routes/subscription.route.js"
 import dashboardRouter from "./routes/dashboard.route.js"
+import healthcheckRouter from "./routes/healthcheck.route.js"
 
 // route declaration
 app.use('/api/v1/users', userRouter)
@@ -41,5 +42,6 @@ app.use("/api/v1/tweets", tweetRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/subscriptions", subscriptionRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+app.use("/api/v1/healthcheck", healthcheckRouter)
 
 export default app
